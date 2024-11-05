@@ -44,6 +44,12 @@
 - [PHP](#php)
 
 - [WordPress](#wordpress)
+
+
+-[Debian 10 Kurulum ve Yapılandırma Rehberi](#debian-10-kurulum-ve-yapılandırma-rehberi)
+
+
+
   
 ## Sanal Makinelerin Temel Islevi
 
@@ -947,5 +953,369 @@ WordPress, genellikle aşağıdaki adımlarla kurulur:
 ## Özet
 
 WordPress, esnekliği, kullanıcı dostu arayüzü ve geniş tema ve eklenti desteği ile hem bireysel kullanıcılar hem de işletmeler için ideal bir web sitesi oluşturma platformudur. Bloglardan kurumsal web sitelerine, e-ticaret platformlarından portföylere kadar çok çeşitli alanlarda kullanılmaktadır.
+
+
+
+
+# Debian 10 Kurulum ve Yapılandırma Rehberi
+
+## İçindekiler
+1. [Ön Hazırlık ve Disk Bölümleme](#ön-hazırlık-ve-disk-bölümleme)
+2. [Temel Sistem Kurulumu](#temel-sistem-kurulumu)
+3. [Sudo Kurulumu ve Yapılandırması](#sudo-kurulumu-ve-yapılandırması)
+4. [SSH Kurulumu ve Yapılandırması](#ssh-kurulumu-ve-yapılandırması)
+5. [UFW Güvenlik Duvarı Kurulumu](#ufw-güvenlik-duvarı-kurulumu)
+6. [Hostname Değiştirme](#hostname-değiştirme)
+7. [Sudo Yapılandırması](#sudo-yapılandırması)
+8. [Kullanıcı Yönetimi ve Şifre Politikası](#kullanıcı-yönetimi-ve-şifre-politikası)
+9. [Crontab Yapılandırması](#crontab-yapılandırması)
+
+## Ön Hazırlık ve Disk Bölümleme
+
+### Disk Alanı Gereksinimleri
+- Bonus bölüm için 30,80 GB alan gereklidir
+
+### Temel Kurulum Adımları
+1. "Install" seçeneğini seçin
+2. Dil ve klavye seçimlerini yapın
+3. Ana bilgisayar adını [kullanıcıadı42] formatında girin (örn: meke42)
+4. Domain name alanını boş bırakın
+5. Root kullanıcısı için şifre belirleyin
+6. Yeni kullanıcının tam adını yazın
+7. Kullanıcı adı kısmına intra kullanıcı adını yazın (örn: meke)
+8. Yeni kullanıcı için şifre belirleyin ve tekrar girin
+9. Zaman dilimini Central seçin
+
+### Disk Yapılandırması
+1. Manual seçeneğini seçin
+2. Önceden oluşturulan diski seçin
+3. Yes ile devam edin
+4. Boş alanı seçin
+5. "Create a new partition" seçin
+6. İlk bölüm için:
+   - 525MB alan ayırın
+   - Primary seçin
+   - Beginning seçin
+   - Use as: Ext2 file system
+   - Mount point: /boot
+   - Bootable flag: on
+
+7. Kalan alan için:
+   - 32.5 GB
+   - Logical
+   - Şifreleme yapılandırması:
+     - Configure encrypted volumes
+     - Create encrypted volumes
+     - /dev/sda5 seçin
+     - Yes ile devam edin
+
+8. LVM Yapılandırması:
+   - Configure the Logical Volume Manager
+   - Create volume group: "LVMGroup"
+   - Şifrelenmiş sda5'i seçin
+   - Aşağıdaki logical volume'ları oluşturun:
+     - root: 10.7 GB
+     - swap: 2.5 GB
+     - home: 5.4 GB
+     - var: 3.2 GB
+     - srv: 3.2 GB
+     - tmp: 3.2 GB
+     - var-log: 4.3 GB
+
+9. Bölümlerin Mount Point Yapılandırması:
+   - home: Ext4, /home
+   - root: Ext4, / (root)
+   - srv: Ext4, /srv
+   - swap: swap area
+   - tmp: Ext2, /tmp
+   - var: Ext4, /var
+   - var-log: Ext4, /var/log
+
+## Temel Sistem Kurulumu
+
+1. Partitioning'i tamamlayın ve Yes ile onaylayın
+2. Debian mirror ülke seçimini yapın
+3. Yazılım seçimlerini kaldırın
+4. GRUB boot loader için:
+   - Yes seçin
+   - /dev/sda seçin
+5. Kurulum tamamlandığında sistem yeniden başlayacak
+6. Şifrelenmiş disk için şifreyi girin
+7. Kullanıcı adı ve şifre ile giriş yapın
+
+## Sudo Kurulumu ve Yapılandırması
+
+1. Root ortamına geçiş:
+```bash
+su -
+```
+
+2. Sudo kurulumu:
+```bash
+apt update -y
+apt upgrade -y
+apt install sudo
+```
+
+3. Kurulumu kontrol edin:
+```bash
+dpkg -l | grep sudo
+```
+
+4. Kullanıcıyı sudo grubuna ekleme:
+```bash
+adduser <username> sudo
+# veya
+usermod -aG sudo <username>
+```
+
+5. Kontrolü:
+```bash
+getent group sudo
+```
+
+6. Sudoers dosyasını düzenleme:
+```bash
+sudo visudo
+```
+Eklenecek satır:
+```
+your_username ALL=(ALL) ALL
+```
+
+7. Sistemi yeniden başlatın:
+```bash
+reboot
+```
+
+8. Sudo yetkisini kontrol edin:
+```bash
+sudo -v
+```
+
+## SSH Kurulumu ve Yapılandırması
+
+1. SSH kurulumu:
+```bash
+sudo apt install openssh-server -y
+# veya
+sudo apt install ssh -y
+```
+
+2. Kurulumu kontrol edin:
+```bash
+dpkg -l | grep ssh
+```
+
+3. SSH durumunu kontrol edin:
+```bash
+sudo systemctl status ssh
+```
+
+4. SSH'yi yeniden başlatın:
+```bash
+sudo service ssh restart
+```
+
+5. Port değişikliği için config dosyasını düzenleyin:
+```bash
+sudo vim /etc/ssh/sshd_config
+```
+
+Yapılacak değişiklikler:
+```
+Port 4242
+PermitRootLogin no
+```
+
+6. Değişiklikleri kontrol edin:
+```bash
+sudo grep Port /etc/ssh/sshd_config
+```
+
+7. SSH'yi yeniden başlatın:
+```bash
+sudo service ssh restart
+```
+
+## UFW Güvenlik Duvarı Kurulumu
+
+1. UFW kurulumu:
+```bash
+sudo apt install ufw -y
+```
+
+2. Kurulumu kontrol edin:
+```bash
+dpkg -l | grep ufw
+```
+
+3. UFW'yi etkinleştirin:
+```bash
+sudo ufw enable
+```
+
+4. SSH ve Port 4242 için kurallar:
+```bash
+sudo ufw allow ssh
+sudo ufw allow 4242
+```
+
+5. Kuralları görüntüleme ve silme:
+```bash
+sudo ufw status numbered
+sudo ufw delete <rule_number>
+```
+
+## Hostname Değiştirme
+
+1. Mevcut hostname'i kontrol edin:
+```bash
+hostnamectl
+```
+
+2. Yeni hostname ayarlama:
+```bash
+sudo hostnamectl set-hostname <new_hostname>
+```
+
+3. /etc/hosts dosyasını düzenleyin:
+```bash
+sudo vim /etc/hosts
+```
+
+4. Sistemi yeniden başlatın:
+```bash
+reboot
+```
+
+## Sudo Yapılandırması
+
+1. Sudo log dizini oluşturma:
+```bash
+sudo mkdir /var/log/sudo
+```
+
+2. Sudoers dosyasını düzenleme:
+```bash
+sudo visudo
+```
+
+Eklenecek yapılandırmalar:
+```
+Defaults log_input,log_output
+Defaults logfile="/var/log/sudo/sudo.log"
+Defaults requiretty
+Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+Defaults passwd_tries=3
+Defaults badpass_message="Hatali Sifre Girdiniz! Lutfen Tekrar Giriniz"
+```
+
+## Kullanıcı Yönetimi ve Şifre Politikası
+
+### Şifre Yaşı Ayarları
+
+1. Login.defs dosyasını düzenleyin:
+```bash
+sudo vim /etc/login.defs
+```
+
+Yapılacak değişiklikler:
+```
+PASS_MAX_DAYS 30
+PASS_MIN_DAYS 2
+PASS_WARN_AGE 7
+```
+
+2. Mevcut kullanıcılar için ayarları güncelleme:
+```bash
+sudo chage --mindays 2 <user>
+sudo chage --maxdays 30 <user>
+sudo chage --warndays 7 <user>
+```
+
+3. Ayarları kontrol etme:
+```bash
+chage -l <user>
+```
+
+### Şifre Gücü Ayarları
+
+1. libpam-pwquality kurulumu:
+```bash
+sudo apt install libpam-pwquality -y
+```
+
+2. Yapılandırma dosyasını düzenleme:
+```bash
+sudo vim /etc/pam.d/common-password
+```
+
+Eklenecek ayarlar:
+```
+password requisite pam_pwquality.so retry=3 ucredit=-1 lcredit=-1 dcredit=-1 maxrepeat=3 usercheck=1 difok=7 enforce_for_root minlen=10
+```
+
+### Kullanıcı Yönetimi Komutları
+
+1. Yeni kullanıcı oluşturma:
+```bash
+sudo adduser <username>
+```
+
+2. Kullanıcı kontrolü:
+```bash
+sudo getent passwd <username>
+id <username>
+```
+
+3. Grup üyeliği kontrolü:
+```bash
+groups
+groups <username>
+```
+
+4. Kullanıcı silme:
+```bash
+sudo deluser <username>
+sudo deluser --remove-home <username>
+sudo deluser --remove-all-files <username>
+```
+
+## Crontab Yapılandırması
+
+1. Net-tools kurulumu:
+```bash
+sudo apt update -y
+sudo apt install -y net-tools
+```
+
+2. Monitoring script oluşturma (/usr/local/bin/monitoring.sh)
+
+
+3. Sudoers dosyasına monitoring.sh için kural ekleme:
+```bash
+sudo visudo
+```
+Eklenecek satır:
+```
+your_username ALL=(ALL) NOPASSWD: /usr/local/bin/monitoring.sh
+```
+
+4. Crontab yapılandırması:
+```bash
+sudo crontab -u root -e
+```
+Eklenecek satır:
+```
+*/10 * * * * bash /usr/local/bin/monitoring.sh
+```
+
+5. Cron servisi yönetimi:
+```bash
+sudo service cron stop    # Durdurmak için
+sudo service cron start   # Başlatmak için
+```
+
 
 
