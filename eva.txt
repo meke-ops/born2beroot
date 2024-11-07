@@ -1,0 +1,90 @@
+
+Soru: Sanal Makine nedir?
+Cevap: Sanal Makine (VM), yazılım kullanarak fiziksel bir bilgisayar yerine programları çalıştırmak ve uygulamalar dağıtmak için kullanılan bir işlem kaynağıdır. Her bir sanal makine, kendi işletim sistemini çalıştırır ve diğer sanal makinelerden ayrı olarak çalışır, hatta hepsi aynı ana bilgisayarda çalışıyor olsa bile. Örneğin, fiziksel bir PC üzerinde sanal bir MacOS makinesi çalıştırabilirsiniz.
+
+Soru: Amacı nedir?
+Cevap: Sanal makineler, farklı işlem gücü ihtiyaçlarını karşılamak, farklı işletim sistemleri gerektiren yazılımları çalıştırmak ya da uygulamaları güvenli bir sandbox ortamında test etmek için dağıtılabilir.
+
+Soru: Nasıl çalışır?
+Cevap: Sanal makineler "Sanallaştırma" teknolojisiyle çalışır. Sanallaştırma, yazılım kullanarak sanal donanım simülasyonu yapar, böylece sanal makineler tek bir ana bilgisayar üzerinde çalışabilir.
+
+Soru: Aptitude ile apt arasındaki fark nedir?
+Cevap: Aptitude, yüksek seviyeli bir paket yöneticisiyken, APT daha düşük seviyeli bir paket yöneticisidir ve diğer yüksek seviyeli paket yöneticileri tarafından kullanılabilir.
+
+
+Soru: AppArmor nedir?
+Cevap: AppArmor ("Application Armor"), sistem yöneticisinin programların yeteneklerini, her program için ayrı ayrı profillerle sınırlamasına olanak tanıyan bir Linux çekirdek güvenlik modülüdür.
+
+Soru: SSH nedir?
+Cevap: SSH, yani Secure Shell veya Secure Socket Shell, kullanıcıların özellikle sistem yöneticilerinin, güvenli olmayan bir ağ üzerinden bir bilgisayara güvenli bir şekilde erişmesini sağlayan bir ağ protokolüdür.
+
+Yeni kullanıcı nasıl eklenir?
+
+$ sudo adduser kullanıcı_adı                   # Yeni kullanıcı oluşturma (evet/hayır)
+$ sudo chage -l kullanıcı_adı                  # Yeni kullanıcının şifre sonlandırma bilgilerini doğrulama
+$ sudo adduser kullanıcı_adı sudo              # Yeni kullanıcıyı sudo grubuna ekleyin
+$ sudo adduser kullanıcı_adı user42            # Yeni kullanıcıyı sudo ve user42 gruplarına atama
+
+
+Script'im nasıl çalışır?
+
+README.md
+
+##########################
+#    İkinci Bölüm: Neler Kontrol Edilmeli?    #
+##########################
+
+|***************************************|
+| 1) lsblk                              1 <- Bölümleri kontrol et
+| 2) sudo aa-status                     2 <- AppArmor durumu
+| 3) getent group sudo                  3 <- sudo grubundaki kullanıcılar
+| 4) getent group user42                4 <- user42 grubundaki kullanıcılar
+| 5) sudo service ssh status            5 <- ssh durumu, evet
+| 6) sudo ufw status                    6 <- ufw durumu
+| 7) ssh kullanıcı_adı@ip_adresi -p 4242 7 <- VM'ye ana bilgisayarınızdan SSH ile bağlanın
+| 8) nano /etc/sudoers.d/<dosya_adı>     8 <- sudo yapılandırma dosyası. İlk olarak $ ls /etc/sudoers.d ile kontrol edebilirsiniz
+| 9) nano /etc/login.defs               9 <- şifre süresi politikası
+| 10) nano /etc/pam.d/common-password  10 <- şifre politikası
+| 11) sudo crontab -l                  11 <- cron programı
+|***************************************|
+
+
+kontrol listemiz ve komutlar:
+
+Host adını nasıl değiştiririm?
+
+$ sudo nano /etc/hostname
+
+/var/log/sudo dizininde sudo logları nerede?
+
+$ cd /var/log/sudo/00/00 && ls
+
+Burada 01 2B 9S 4D vb. adlarla pek çok dizin görmelisiniz. Bunlar, ihtiyacımız olan logları içeriyor.
+
+$ sudo apt update
+$ ls
+Şimdi burada yeni bir dizin göreceksiniz.
+$ cd <yenidizininadı> && ls
+$ cat log  <- Giriş logu
+$ cat ttyout <- Çıkış logu
+
+8080 portunu UFW'ye nasıl eklerim ve kaldırırım?
+$ sudo ufw allow 8080   <- Ekle
+$ sudo ufw status        <- Durumu kontrol et
+$ sudo ufw deny 8080     <- Kaldır
+
+Script'i her 30 saniyede bir nasıl çalıştırırım?
+$ sudo crontab -e
+Önceki cron "schedule" komutunu kaldırın veya işaretleyin ve crontab dosyasına şu satırları ekleyin:
+
+|*************************************************|
+| */1 * * * * /path/to/monitoring.sh              |
+| */1 * * * * sleep 30s && /path/to/monitoring.sh |
+|*************************************************|
+
+Script'in her boot'ta çalışmaması için:
+|********************************|
+| @reboot /path/to/monitoring.sh |
+|********************************|
+satırını crontab dosyasından kaldırabilirsiniz.
+
