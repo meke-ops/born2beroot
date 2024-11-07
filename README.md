@@ -1317,12 +1317,11 @@ sudo service cron stop    # Durdurmak için
 sudo service cron start   # Başlatmak için
 ```
 
-##Contributors
+## Contributors
+
 Muhammed Maruf Güveli
 Emir Ismail Genç
 
-##Resources
-Davut Uzun born2beroot kurulum notları
-wiki.archlinux.org/title/Main_page
+## Resources
 
-
+wiki.archlinux.org
